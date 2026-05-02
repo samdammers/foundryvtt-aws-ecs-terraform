@@ -10,4 +10,11 @@ terraform {
 
 provider "aws" {
   region = "ap-southeast-4"
+
+  default_tags {
+    tags = {
+      Repo      = var.repo
+      ManagedBy = "terraform"
+    }
+  }
 }

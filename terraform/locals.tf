@@ -7,7 +7,6 @@ locals {
   foundry_port     = 30000
 
   tags = {
-    service    = "foundry"
-    managed_by = "terraform"
+    Service = "foundry"
   }
 }

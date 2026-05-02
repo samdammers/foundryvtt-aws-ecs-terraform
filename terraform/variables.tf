@@ -72,3 +72,9 @@ variable "container_hostname" {
   description = "Hostname written into options.json for Foundry license binding — use your permanent production hostname (e.g. foundry.example.com)"
   type        = string
 }
+
+variable "repo" {
+  description = "Repository URL for the repo tag applied to all resources"
+  type        = string
+  default     = "samdammers/foundryvtt-aws-ecs-terraform"
+}

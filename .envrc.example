@@ -1,0 +1,52 @@
+# Copy this file to .envrc and fill in your values.
+# Requires direnv: https://direnv.net/
+# Run `direnv allow` after copying and editing.
+#
+# .envrc is gitignored — never commit it.
+
+# -------------------------------------------------------------------
+# AWS authentication
+# -------------------------------------------------------------------
+# Option A (recommended): use a named profile from ~/.aws/config
+export AWS_PROFILE="your-profile-name"
+
+# Option B: static credentials (less preferred — use IAM Identity Center or roles where possible)
+# export AWS_ACCESS_KEY_ID="AKIAxxxxxxxxxxxxxxxxx"
+# export AWS_SECRET_ACCESS_KEY="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# -------------------------------------------------------------------
+# AWS environment
+# -------------------------------------------------------------------
+export AWS_DEFAULT_REGION="ap-southeast-2"
+export AWS_ACCOUNT_ID="123456789012"
+
+# -------------------------------------------------------------------
+# Terraform variables (TF_VAR_* mirrors terraform.tfvars)
+# Using these means you don't need a terraform.tfvars file — pick one
+# approach or the other, not both.
+# -------------------------------------------------------------------
+
+# Required
+export TF_VAR_domain="example.com"
+export TF_VAR_hosted_zone_id="ZXXXXXXXXXXXXXXXXX"
+export TF_VAR_s3_bucket="foundry-vtt-yourname-ap-southeast-2"
+export TF_VAR_vpc_id="vpc-xxxxxxxxxxxxxxxxx"
+export TF_VAR_container_hostname="foundry.example.com"
+export TF_VAR_foundry_world="my-campaign"
+export TF_VAR_api_cert_arn="arn:aws:acm:ap-southeast-2:123456789012:certificate/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+# Lists must be JSON arrays
+export TF_VAR_subnet_ids='["subnet-xxxxxxxxxxxxxxxxx","subnet-xxxxxxxxxxxxxxxxx","subnet-xxxxxxxxxxxxxxxxx"]'
+export TF_VAR_vpc_subnet_cidrs='["10.0.0.0/24","10.0.1.0/24","10.0.2.0/24"]'
+
+# Optional (defaults shown)
+# export TF_VAR_foundry_image="ghcr.io/felddy/foundryvtt:14"
+# export TF_VAR_fargate_cpu="1024"
+# export TF_VAR_fargate_memory="2048"
+# export TF_VAR_timezone="UTC"
+# export TF_VAR_auto_stop_schedule="cron(0 15 * * ? *)"
+
+# -------------------------------------------------------------------
+# Convenience: replace <region> in docs/ commands with this variable
+#   aws logs tail /ecs/foundry --follow --region $AWS_DEFAULT_REGION
+# -------------------------------------------------------------------

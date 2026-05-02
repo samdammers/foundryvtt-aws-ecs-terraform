@@ -1,5 +1,7 @@
 # FoundryVTT on AWS — Terraform
 
+![FoundryVTT on AWS ECS Terraform](docs/FoundryVTT_AWS_ECS_Terraform.png)
+
 Terraform infrastructure for running [FoundryVTT](https://foundryvtt.com/) on AWS ECS Fargate. Built for a personal game server running a small group — cheap to operate, easy to start/stop between sessions, with persistent world data on EFS.
 
 ## Architecture

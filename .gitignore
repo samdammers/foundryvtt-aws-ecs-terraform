@@ -1,0 +1,31 @@
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup
+*.tfplan
+crash.log
+override.tf
+override.tf.json
+terraform.tfvars
+
+# Secrets / credentials
+*.pem
+*.key
+*.env
+.env*
+
+# Lambda build artifacts
+terraform/lambda/__pycache__/
+terraform/lambda/*.pyc
+terraform/lambda/handler.zip
+
+# Old CloudFormation implementation — no longer active
+old_implementation/
+
+# HAR files (may contain session tokens)
+*.har
+
+# OS
+.DS_Store
+Thumbs.db

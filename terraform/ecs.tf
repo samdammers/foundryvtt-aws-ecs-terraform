@@ -61,7 +61,7 @@ resource "aws_ecs_task_definition" "foundry" {
       environment = [
         # Prevent the container from overwriting options.json on restart
         { name = "CONTAINER_PRESERVE_CONFIG", value = "true" },
-        { name = "FOUNDRY_WORLD",            value = var.foundry_world },
+        { name = "FOUNDRY_WORLD", value = var.foundry_world },
         # Foundry writes this into options.json as the hostname — license binds to it.
         # Use the permanent production hostname so no re-licensing is needed after cutover.
         { name = "FOUNDRY_HOSTNAME", value = var.container_hostname },
@@ -139,8 +139,8 @@ resource "aws_ecs_service" "foundry" {
     container_port   = local.foundry_port
   }
 
-  force_new_deployment    = true
-  enable_execute_command  = true
+  force_new_deployment   = true
+  enable_execute_command = true
 
   lifecycle {
     # Prevent terraform apply from resetting desired_count back to 0 after you scale it up

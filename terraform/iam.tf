@@ -36,7 +36,7 @@ resource "aws_iam_role_policy" "ecs_execution_secrets" {
 }
 
 # --- ECS Task Role ---
-# Identity the container itself runs as at runtime — S3 and EFS access.
+# Identity the container itself runs as at runtime - S3 and EFS access.
 resource "aws_iam_role" "ecs_task" {
   name = "foundry-ecs-task"
 
@@ -151,25 +151,45 @@ resource "aws_iam_role_policy" "lambda_permissions" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      {
-        Effect   = "Allow"
-        Action   = ["ecs:DescribeServices", "ecs:UpdateService", "ecs:ListTasks", "ecs:DescribeTasks"]
-        Resource = "*"
-      },
-      {
-        Effect   = "Allow"
-        Action   = ["s3:GetBucketPolicy", "s3:PutBucketPolicy"]
-        Resource = "arn:aws:s3:::${var.s3_bucket}"
-      },
-    ]
+    Statement = concat(
+      [
+        {
+          Effect   = "Allow"
+          Action   = ["ecs:DescribeServices", "ecs:UpdateService", "ecs:ListTasks", "ecs:DescribeTasks"]
+          Resource = "*"
+        },
+        {
+          Effect   = "Allow"
+          Action   = ["s3:GetBucketPolicy", "s3:PutBucketPolicy"]
+          Resource = "arn:aws:s3:::${var.s3_bucket}"
+        },
+      ],
+      var.use_cloudfront ? [
+        {
+          Effect   = "Allow"
+          Action   = ["ec2:DescribeNetworkInterfaces"]
+          Resource = "*"
+        },
+        {
+          Effect   = "Allow"
+          Action   = ["route53:ChangeResourceRecordSets", "route53:ListResourceRecordSets"]
+          Resource = "arn:aws:route53:::hostedzone/${var.hosted_zone_id}"
+        },
+      ] : []
+    )
   })
 }
 
 # --- API Gateway CloudWatch Logging Role ---
-# Account-level singleton. If the Foundry-API CloudFormation stack already set this,
-# import it: terraform import aws_api_gateway_account.main ap-southeast-4
+# Account-level singleton per AWS account/region. This stack manages it by default
+# (manage_api_gateway_account = true) so terraform apply works standalone in a fresh
+# account - if you're layering this alongside another Terraform stack that already
+# manages that same setting in the same account, set manage_api_gateway_account =
+# false here instead, or the two stacks will fight over it (and risk clobbering it
+# on destroy).
 resource "aws_iam_role" "apigw_cloudwatch" {
+  count = var.manage_api_gateway_account ? 1 : 0
+
   name = "foundry-apigw-cloudwatch"
 
   assume_role_policy = jsonencode({
@@ -185,10 +205,14 @@ resource "aws_iam_role" "apigw_cloudwatch" {
 }
 
 resource "aws_iam_role_policy_attachment" "apigw_cloudwatch" {
-  role       = aws_iam_role.apigw_cloudwatch.name
+  count = var.manage_api_gateway_account ? 1 : 0
+
+  role       = aws_iam_role.apigw_cloudwatch[0].name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
 }
 
 resource "aws_api_gateway_account" "main" {
-  cloudwatch_role_arn = aws_iam_role.apigw_cloudwatch.arn
+  count = var.manage_api_gateway_account ? 1 : 0
+
+  cloudwatch_role_arn = aws_iam_role.apigw_cloudwatch[0].arn
 }

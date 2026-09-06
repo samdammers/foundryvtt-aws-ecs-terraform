@@ -1,8 +1,13 @@
+# ALB path - active only when use_cloudfront = false. Kept alongside the CloudFront
+# path (terraform/cloudfront.tf) rather than removed, for template users without an
+# existing CloudFront-based deployment to adopt.
 resource "aws_lb" "foundry" {
+  count = var.use_cloudfront ? 0 : 1
+
   name               = "foundry-alb"
   internal           = false
   load_balancer_type = "application"
-  security_groups    = [aws_security_group.alb.id]
+  security_groups    = [aws_security_group.alb[0].id]
   subnets            = var.subnet_ids
 
   # Long timeout required for Foundry's persistent WebSocket connections
@@ -14,6 +19,8 @@ resource "aws_lb" "foundry" {
 }
 
 resource "aws_lb_target_group" "foundry" {
+  count = var.use_cloudfront ? 0 : 1
+
   name        = "foundry-tg"
   port        = local.foundry_port
   protocol    = "HTTP"
@@ -32,13 +39,15 @@ resource "aws_lb_target_group" "foundry" {
     matcher             = "200-302" # Foundry may redirect / to /game or /setup
   }
 
-  deregistration_delay = 30 # Single task — no need to wait long
+  deregistration_delay = 30 # Single task, no need to wait long
 
   tags = merge(local.tags, { Name = "foundry-tg" })
 }
 
 resource "aws_lb_listener" "http" {
-  load_balancer_arn = aws_lb.foundry.arn
+  count = var.use_cloudfront ? 0 : 1
+
+  load_balancer_arn = aws_lb.foundry[0].arn
   port              = 80
   protocol          = "HTTP"
 
@@ -53,14 +62,16 @@ resource "aws_lb_listener" "http" {
 }
 
 resource "aws_lb_listener" "https" {
-  load_balancer_arn = aws_lb.foundry.arn
+  count = var.use_cloudfront ? 0 : 1
+
+  load_balancer_arn = aws_lb.foundry[0].arn
   port              = 443
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
-  certificate_arn   = aws_acm_certificate_validation.foundry_alb.certificate_arn
+  certificate_arn   = aws_acm_certificate_validation.foundry_alb[0].certificate_arn
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.foundry.arn
+    target_group_arn = aws_lb_target_group.foundry[0].arn
   }
 }

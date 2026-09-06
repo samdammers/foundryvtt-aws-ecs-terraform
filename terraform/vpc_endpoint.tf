@@ -1,4 +1,4 @@
-# S3 Gateway VPC Endpoint — routes Fargate→S3 traffic within the VPC.
+# S3 Gateway VPC Endpoint - routes Fargate-to-S3 traffic within the VPC.
 #
 # Without this, Fargate tasks (assign_public_ip=true) reach S3 via their public
 # ENI IP, which is NOT in 172.31.0.0/16. The existing S3 bucket policy restricts

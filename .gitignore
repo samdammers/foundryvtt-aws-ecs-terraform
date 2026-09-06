@@ -7,7 +7,6 @@
 crash.log
 override.tf
 override.tf.json
-terraform.tfvars
 
 # Secrets / credentials
 *.pem
@@ -20,8 +19,15 @@ terraform.tfvars
 terraform/lambda/__pycache__/
 terraform/lambda/*.pyc
 terraform/lambda/handler.zip
+terraform/lambda/nacl/
+terraform/lambda/cffi/
+terraform/lambda/pycparser/
+terraform/lambda/bin/
+terraform/lambda/_cffi_backend*.so
+terraform/lambda/*.dist-info/
+terraform/lambda/*.libs/
 
-# Old CloudFormation implementation — no longer active
+# Old CloudFormation implementation - no longer active
 old_implementation/
 
 # HAR files (may contain session tokens)

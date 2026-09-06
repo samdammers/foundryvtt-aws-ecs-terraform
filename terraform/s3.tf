@@ -22,7 +22,7 @@ resource "aws_s3_bucket_public_access_block" "foundry" {
   restrict_public_buckets = false
 }
 
-# Base policy — VPC subnet CIDRs only. Lambda dynamically adds/removes IPs via
+# Base policy - VPC subnet CIDRs only. Lambda dynamically adds/removes IPs via
 # /ip/add and /ip/reset; ignore_changes prevents terraform apply from wiping
 # those transient entries.
 resource "aws_s3_bucket_policy" "foundry" {

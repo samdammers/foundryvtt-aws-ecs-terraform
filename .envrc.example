@@ -2,7 +2,7 @@
 # Requires direnv: https://direnv.net/
 # Run `direnv allow` after copying and editing.
 #
-# .envrc is gitignored — never commit it.
+# .envrc is gitignored - never commit it.
 
 # -------------------------------------------------------------------
 # AWS authentication
@@ -10,7 +10,7 @@
 # Option A (recommended): use a named profile from ~/.aws/config
 export AWS_PROFILE="your-profile-name"
 
-# Option B: static credentials (less preferred — use IAM Identity Center or roles where possible)
+# Option B: static credentials (less preferred - use IAM Identity Center or roles where possible)
 # export AWS_ACCESS_KEY_ID="AKIAxxxxxxxxxxxxxxxxx"
 # export AWS_SECRET_ACCESS_KEY="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
@@ -22,11 +22,10 @@ export AWS_ACCOUNT_ID="123456789012"
 
 # -------------------------------------------------------------------
 # Terraform variables (TF_VAR_* mirrors terraform.tfvars)
-# Using these means you don't need a terraform.tfvars file — pick one
-# approach or the other, not both.
 # -------------------------------------------------------------------
 
 # Required
+export TF_VAR_aws_region="ap-southeast-2"
 export TF_VAR_domain="example.com"
 export TF_VAR_hosted_zone_id="ZXXXXXXXXXXXXXXXXX"
 export TF_VAR_s3_bucket="foundry-vtt-yourname-ap-southeast-2"
@@ -40,11 +39,27 @@ export TF_VAR_subnet_ids='["subnet-xxxxxxxxxxxxxxxxx","subnet-xxxxxxxxxxxxxxxxx"
 export TF_VAR_vpc_subnet_cidrs='["10.0.0.0/24","10.0.1.0/24","10.0.2.0/24"]'
 
 # Optional (defaults shown)
+# export TF_VAR_use_cloudfront="true" # true (default) = CloudFront, false = ALB - see README Architecture
+# export TF_VAR_manage_api_gateway_account="true" # set false if another stack in this account already manages it
 # export TF_VAR_foundry_image="ghcr.io/felddy/foundryvtt:14"
 # export TF_VAR_fargate_cpu="1024"
 # export TF_VAR_fargate_memory="2048"
 # export TF_VAR_timezone="UTC"
 # export TF_VAR_auto_stop_schedule="cron(0 15 * * ? *)"
+# export TF_VAR_ip_reset_schedule="cron(0 15 * * ? *)" # how often the S3 asset allowlist resets - see variables.tf
+
+# -------------------------------------------------------------------
+# Optional Discord slash-command integration (leave blank to skip)
+# -------------------------------------------------------------------
+# export TF_VAR_discord_public_key=""
+# export TF_VAR_discord_webhook_url=""
+# Your Discord app's Application ID is also needed later (see README), but
+# only for a one-off manual command - it's never a Terraform variable.
+
+# -------------------------------------------------------------------
+# Optional - cosmetic
+# -------------------------------------------------------------------
+# export TF_VAR_repo="your-github-username/your-fork-name"
 
 # -------------------------------------------------------------------
 # Convenience: replace <region> in docs/ commands with this variable

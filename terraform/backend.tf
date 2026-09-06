@@ -1,10 +1,13 @@
-# Update bucket, key, and region to match your own S3 state bucket.
-# The bucket must exist before running terraform init.
-# See README for setup instructions.
+# Update bucket, key, and region to match your own S3 state bucket (or delete
+# this file entirely for local state). The bucket must exist before running
+# terraform init. Never commit your real bucket name here - keep this edit
+# uncommitted, or fork this file privately.
 terraform {
   backend "s3" {
-    bucket = "your-terraform-state-bucket"
-    key    = "terraform/state/foundryvtt-ecs.tfstate"
-    region = "ap-southeast-2" # change to your region
+    bucket       = "your-terraform-state-bucket"
+    key          = "foundryvtt-ecs/terraform.tfstate"
+    region       = "us-east-1"
+    use_lockfile = true
+    encrypt      = true
   }
 }

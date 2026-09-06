@@ -9,7 +9,7 @@ resource "aws_api_gateway_rest_api" "foundry" {
   tags = local.tags
 }
 
-# /start — ECS scale to 1
+# /start - ECS scale to 1
 resource "aws_api_gateway_resource" "start" {
   rest_api_id = aws_api_gateway_rest_api.foundry.id
   parent_id   = aws_api_gateway_rest_api.foundry.root_resource_id
@@ -31,7 +31,7 @@ resource "aws_api_gateway_integration" "start" {
   timeout_milliseconds    = 15000
 }
 
-# /stop — ECS scale to 0
+# /stop - ECS scale to 0
 resource "aws_api_gateway_resource" "stop" {
   rest_api_id = aws_api_gateway_rest_api.foundry.id
   parent_id   = aws_api_gateway_rest_api.foundry.root_resource_id
@@ -47,6 +47,28 @@ resource "aws_api_gateway_integration" "stop" {
   rest_api_id             = aws_api_gateway_rest_api.foundry.id
   resource_id             = aws_api_gateway_resource.stop.id
   http_method             = aws_api_gateway_method.stop.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.foundry.invoke_arn
+  timeout_milliseconds    = 15000
+}
+
+# /status - service state (no credentials, safe to leave unauthenticated)
+resource "aws_api_gateway_resource" "status" {
+  rest_api_id = aws_api_gateway_rest_api.foundry.id
+  parent_id   = aws_api_gateway_rest_api.foundry.root_resource_id
+  path_part   = "status"
+}
+resource "aws_api_gateway_method" "status" {
+  rest_api_id   = aws_api_gateway_rest_api.foundry.id
+  resource_id   = aws_api_gateway_resource.status.id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+resource "aws_api_gateway_integration" "status" {
+  rest_api_id             = aws_api_gateway_rest_api.foundry.id
+  resource_id             = aws_api_gateway_resource.status.id
+  http_method             = aws_api_gateway_method.status.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = aws_lambda_function.foundry.invoke_arn
@@ -104,7 +126,31 @@ resource "aws_api_gateway_integration" "ip_reset" {
   timeout_milliseconds    = 15000
 }
 
-# Deployment — recreated automatically when any integration changes
+# /discord - Discord Interactions Endpoint (slash commands). Authorization is "NONE"
+# at the AWS layer deliberately: Discord's servers call this directly (no IP to
+# allowlist), and the Lambda verifies Discord's own Ed25519 request signature instead.
+resource "aws_api_gateway_resource" "discord" {
+  rest_api_id = aws_api_gateway_rest_api.foundry.id
+  parent_id   = aws_api_gateway_rest_api.foundry.root_resource_id
+  path_part   = "discord"
+}
+resource "aws_api_gateway_method" "discord" {
+  rest_api_id   = aws_api_gateway_rest_api.foundry.id
+  resource_id   = aws_api_gateway_resource.discord.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+resource "aws_api_gateway_integration" "discord" {
+  rest_api_id             = aws_api_gateway_rest_api.foundry.id
+  resource_id             = aws_api_gateway_resource.discord.id
+  http_method             = aws_api_gateway_method.discord.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.foundry.invoke_arn
+  timeout_milliseconds    = 15000
+}
+
+# Deployment - recreated automatically when any integration changes
 resource "aws_api_gateway_deployment" "foundry" {
   rest_api_id = aws_api_gateway_rest_api.foundry.id
 
@@ -112,8 +158,10 @@ resource "aws_api_gateway_deployment" "foundry" {
     redeployment = sha1(jsonencode([
       aws_api_gateway_integration.start,
       aws_api_gateway_integration.stop,
+      aws_api_gateway_integration.status,
       aws_api_gateway_integration.ip_add,
       aws_api_gateway_integration.ip_reset,
+      aws_api_gateway_integration.discord,
     ]))
   }
 

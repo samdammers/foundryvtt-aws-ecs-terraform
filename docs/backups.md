@@ -65,7 +65,7 @@ aws backup list-recovery-points-by-vault \
 
 ## Restoring from backup
 
-AWS Backup restore always creates a **new EFS filesystem** — it does not overwrite the existing one. This means you can restore alongside your current data without risk.
+AWS Backup restore always creates a **new EFS filesystem** - it does not overwrite the existing one. This means you can restore alongside your current data without risk.
 
 ### 1. Start the restore job
 
@@ -87,7 +87,7 @@ aws backup describe-restore-job \
   --query '{Status:Status,CreatedResourceArn:CreatedResourceArn}'
 ```
 
-Note the `CreatedResourceArn` — this contains the new EFS filesystem ID.
+Note the `CreatedResourceArn` - this contains the new EFS filesystem ID.
 
 ### 3. Point Terraform at the restored filesystem
 
@@ -112,7 +112,7 @@ curl https://api.foundry.<domain>/start
 | World data (scenes, actors, items, journal) | Yes | EFS |
 | Installed modules and systems | Yes | EFS |
 | Server config (options.json) | Yes | EFS |
-| Game assets (maps, tokens, music) | No | S3 — versioning optional |
-| Foundry credentials | No | Secrets Manager — not needed, just re-enter |
+| Game assets (maps, tokens, music) | No | S3 - versioning optional |
+| Foundry credentials | No | Secrets Manager - not needed, just re-enter |
 
 S3 assets are not included in the EFS backup. If you have assets you can't easily re-upload, consider enabling [S3 versioning](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html) on the assets bucket.

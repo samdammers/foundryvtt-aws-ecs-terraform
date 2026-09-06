@@ -61,8 +61,8 @@ resource "aws_ecs_task_definition" "foundry" {
       environment = [
         # Prevent the container from overwriting options.json on restart
         { name = "CONTAINER_PRESERVE_CONFIG", value = "true" },
-        { name = "FOUNDRY_WORLD",            value = var.foundry_world },
-        # Foundry writes this into options.json as the hostname — license binds to it.
+        { name = "FOUNDRY_WORLD", value = var.foundry_world },
+        # Foundry writes this into options.json as the hostname - license binds to it.
         # Use the permanent production hostname so no re-licensing is needed after cutover.
         { name = "FOUNDRY_HOSTNAME", value = var.container_hostname },
         # Tell Foundry it's behind an HTTPS proxy
@@ -73,7 +73,7 @@ resource "aws_ecs_task_definition" "foundry" {
         { name = "CONTAINER_CACHE", value = "/data/container_cache" },
       ]
 
-      # Credentials injected from Secrets Manager — never appear in logs or task metadata
+      # Credentials injected from Secrets Manager - never appear in logs or task metadata
       secrets = [
         {
           name      = "FOUNDRY_USERNAME"
@@ -130,17 +130,20 @@ resource "aws_ecs_service" "foundry" {
   network_configuration {
     subnets          = var.subnet_ids
     security_groups  = [aws_security_group.ecs_task.id]
-    assign_public_ip = true # Required — default VPC has no NAT gateway
+    assign_public_ip = true # Required - default VPC has no NAT gateway
   }
 
-  load_balancer {
-    target_group_arn = aws_lb_target_group.foundry.arn
-    container_name   = "foundry"
-    container_port   = local.foundry_port
+  dynamic "load_balancer" {
+    for_each = var.use_cloudfront ? [] : [1]
+    content {
+      target_group_arn = aws_lb_target_group.foundry[0].arn
+      container_name   = "foundry"
+      container_port   = local.foundry_port
+    }
   }
 
-  force_new_deployment    = true
-  enable_execute_command  = true
+  force_new_deployment   = true
+  enable_execute_command = true
 
   lifecycle {
     # Prevent terraform apply from resetting desired_count back to 0 after you scale it up

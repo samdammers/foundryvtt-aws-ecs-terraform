@@ -14,7 +14,7 @@ curl https://api.foundry.<domain>/start
 curl https://api.foundry.<domain>/stop
 ```
 
-These are plain GET requests — you can bookmark them in your browser or share the links with players to let them start the server themselves.
+These are plain GET requests - you can bookmark them in your browser or share the links with players to let them start the server themselves.
 
 Alternatively, via the AWS CLI:
 
@@ -26,13 +26,13 @@ aws ecs update-service --cluster foundry --service foundry --desired-count 1 --r
 aws ecs update-service --cluster foundry --service foundry --desired-count 0 --region <region>
 ```
 
-> **Note:** `terraform apply` will never reset the desired count — the ECS service has `lifecycle { ignore_changes = [desired_count] }`. Terraform only manages the task definition and service configuration, not whether the server is running.
+> **Note:** `terraform apply` will never reset the desired count - the ECS service has `lifecycle { ignore_changes = [desired_count] }`. Terraform only manages the task definition and service configuration, not whether the server is running.
 
 ## Auto-stop schedule
 
-The server stops automatically on the schedule defined by `auto_stop_schedule` in your `terraform.tfvars` (default: 3pm UTC daily). This prevents the Fargate task running overnight and accumulating cost if you forget to stop it.
+The server stops automatically on the schedule defined by `auto_stop_schedule` via `TF_VAR_auto_stop_schedule` in your `.envrc` (default: 3pm UTC daily). This prevents the Fargate task running overnight and accumulating cost if you forget to stop it.
 
-To change the schedule, update `auto_stop_schedule` and run `terraform apply`:
+To change the schedule, update `TF_VAR_auto_stop_schedule` in your `.envrc` and run `terraform apply`:
 
 ```hcl
 # Examples
@@ -44,14 +44,14 @@ The schedule uses [EventBridge cron syntax](https://docs.aws.amazon.com/eventbri
 
 ## First start after deployment
 
-On the very first start (or after a new task definition is deployed), FoundryVTT will ask you to verify your software license. This is expected — it happens because the container hostname changes between task restarts.
+On the very first start (or after a new task definition is deployed), FoundryVTT will ask you to verify your software license. This is expected - it happens because the container hostname changes between task restarts.
 
 1. Open `https://foundry.<domain>` in your browser
-2. You'll be prompted to confirm the license — click through
+2. You'll be prompted to confirm the license - click through
 3. Log in with your admin password
 4. Your world will load
 
-This confirmation is required on every container restart. It's a known limitation of running FoundryVTT in a containerised environment — see [Known limitations](../README.md#known-limitations).
+This confirmation is required on every container restart. It's a known limitation of running FoundryVTT in a containerised environment - see [Known limitations](../README.md#known-limitations).
 
 ## Managing S3 asset access
 
@@ -70,11 +70,11 @@ At the end of a session, reset the allowlist back to VPC CIDRs only:
 curl https://api.foundry.<domain>/ip/reset
 ```
 
-The reset is also run automatically on the same schedule as the auto-stop, so stale IPs are cleared daily.
+The reset also runs automatically on `ip_reset_schedule` (default: daily), so stale IPs get cleared without you having to remember. The point of the allowlist is keeping game assets (maps, tokens, etc.) away from the open internet, not gating individual sessions - if your players don't rotate IPs often, a longer interval (e.g. yearly, `cron(0 15 1 1 ? *)`) trades a little of that protection for a lot less friction, since players won't need to re-run `/ip/add` every session.
 
 ### Why IP allowlisting instead of public access?
 
-S3 objects don't require authentication when accessed via a browser — if the bucket were fully public anyone with a direct URL could download your maps and assets. The IP allowlist provides a lightweight barrier without requiring players to authenticate.
+S3 objects don't require authentication when accessed via a browser - if the bucket were fully public anyone with a direct URL could download your maps and assets. The IP allowlist provides a lightweight barrier without requiring players to authenticate.
 
 ## Checking service status
 

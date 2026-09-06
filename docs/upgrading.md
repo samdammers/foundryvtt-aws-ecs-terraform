@@ -4,9 +4,9 @@
 
 FoundryVTT world migrations are **one-way and irreversible**. Once a world is opened in a newer version, it cannot be downgraded. Always take a backup before upgrading and verify it completed before proceeding.
 
-## EFS lock file — why you must stop first
+## EFS lock file - why you must stop first
 
-FoundryVTT writes a lock file to the EFS data directory when it starts. ECS rolling deployments try to start the new task before stopping the old one — this causes the new container to fail immediately because the lock file is already held.
+FoundryVTT writes a lock file to the EFS data directory when it starts. ECS rolling deployments try to start the new task before stopping the old one - this causes the new container to fail immediately because the lock file is already held.
 
 **Always stop the service completely before applying a new image version.**
 
@@ -15,10 +15,10 @@ FoundryVTT writes a lock file to the EFS data directory when it starts. ECS roll
 You must upgrade one major version at a time:
 
 ```
-V12 → V13 → V14
+V12 -> V13 -> V14
 ```
 
-Skipping versions (e.g. V12 directly to V14) is not supported — V14's world migration expects V13-format data.
+Skipping versions (e.g. V12 directly to V14) is not supported - V14's world migration expects V13-format data.
 
 ## Step-by-step procedure
 
@@ -57,10 +57,10 @@ Wait until `State` is `COMPLETED` before continuing.
 
 ### 3. Update the image version
 
-In `terraform/terraform.tfvars`:
+Set `TF_VAR_foundry_image` in your `.envrc`:
 
-```hcl
-foundry_image = "ghcr.io/felddy/foundryvtt:13"  # or :14
+```bash
+export TF_VAR_foundry_image="ghcr.io/felddy/foundryvtt:13"  # or :14
 ```
 
 Then apply:
@@ -80,7 +80,7 @@ curl https://api.foundry.<domain>/start
 
 ### 5. Confirm the migration
 
-Open `https://foundry.<domain>` in your browser, confirm the license when prompted, then log in as GM. Foundry will display a migration progress bar — wait for it to complete and verify your world loads correctly.
+Open `https://foundry.<domain>` in your browser, confirm the license when prompted, then log in as GM. Foundry will display a migration progress bar - wait for it to complete and verify your world loads correctly.
 
 Check the logs if anything looks wrong:
 
@@ -90,11 +90,11 @@ aws logs tail /ecs/foundry --follow --region <region>
 
 ### 6. Proceed to the next version (if applicable)
 
-Once you've confirmed the world is healthy at V13, repeat steps 1–5 to upgrade from V13 to V14. Taking a second backup between steps is recommended.
+Once you've confirmed the world is healthy at V13, repeat steps 1-5 to upgrade from V13 to V14. Taking a second backup between steps is recommended.
 
 ## Rollback procedure
 
-If a migration fails, restore from the backup taken in step 2. AWS Backup restore creates a **new EFS filesystem** — it does not overwrite the existing one.
+If a migration fails, restore from the backup taken in step 2. AWS Backup restore creates a **new EFS filesystem** - it does not overwrite the existing one.
 
 ```bash
 # 1. Find the recovery point ARN
@@ -117,8 +117,8 @@ aws backup describe-restore-job --restore-job-id <id> --region <region>
 
 Once the restore completes:
 
-1. Update `terraform/efs.tf` — replace the `creation_token` and any hardcoded references with the new filesystem ID, or import the new resource
-2. Revert `foundry_image` in `terraform.tfvars` to the previous version
+1. Update `terraform/efs.tf` - replace the `creation_token` and any hardcoded references with the new filesystem ID, or import the new resource
+2. Revert `TF_VAR_foundry_image` in your `.envrc` to the previous version
 3. Run `terraform apply`
 4. Start the server
 

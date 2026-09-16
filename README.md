@@ -4,6 +4,21 @@
 
 Terraform infrastructure for running [FoundryVTT](https://foundryvtt.com/) on AWS ECS Fargate. Built for a personal game server running a small group - cheap to operate, easy to start/stop between sessions, with persistent world data on EFS.
 
+> **Setting up a brand-new personal AWS account?**
+> [samdammers/aws-personal-account-template](https://github.com/samdammers/aws-personal-account-template)
+> bootstraps secure sign-in (Google login via Auth0 + IAM Identity Center, no IAM
+> user password) plus baseline guardrails (CloudTrail, an org-wide SCP, cost
+> anomaly alerts) - a good first step before deploying stacks like this one. It's
+> optional and independent, but its outputs cover most of this template's own
+> prerequisites: its default VPC adoption satisfies [prerequisite 2](#2-a-vpc-with-a-public-subnet),
+> its `artifacts-<account-id>` bucket is a ready-made Terraform state bucket for
+> [prerequisite 5](#5-terraform-and-an-s3-bucket-for-its-state) (not the same
+> thing as this template's own `s3_bucket` variable, which is a separate,
+> always-fresh bucket for game assets), setting its `domain_name` variable
+> creates the hosted zone [prerequisite 3](#3-a-domain-delegated-to-a-route53-hosted-zone)
+> needs, and it also owns the account-level API Gateway CloudWatch logging role
+> singleton (`manage_api_gateway_account = false` here, if you're using it).
+
 ## AI disclosure
 
 This repo was built collaboratively with Claude (Anthropic's AI). Reviewing
@@ -71,12 +86,54 @@ Switching `use_cloudfront` to `false` adds the ALB's ~$20/month fixed cost in pl
 
 ## Prerequisites
 
-- AWS account with a Route53 hosted zone for your domain
-- [Terraform](https://developer.hashicorp.com/terraform/install) >= 1.16
-- [AWS CLI](https://aws.amazon.com/cli/) configured (`aws configure`)
-- A FoundryVTT license (required by the [felddy/foundryvtt](https://github.com/felddy/foundryvtt-docker) container to download the software)
-- An S3 bucket for Terraform state (or use a local backend)
-- [direnv](https://direnv.net/), for the `.envrc` configuration convention below
+You need, already existing in your own AWS account before running `terraform apply`:
+
+### 1. An AWS account, with an authenticated CLI
+
+[Terraform](https://developer.hashicorp.com/terraform/install) >= 1.16, the
+[AWS CLI](https://aws.amazon.com/cli/) configured (`aws configure`) - this
+stack uses the CLI's default credential chain, no hardcoded profile - and
+[direnv](https://direnv.net/), for the `.envrc` configuration convention below.
+
+### 2. A VPC with a public subnet
+
+The **default VPC** that every AWS region already has works fine - you don't
+need to create a custom one. If you've applied
+[samdammers/aws-personal-account-template](https://github.com/samdammers/aws-personal-account-template),
+it already adopted this VPC and locked down its default security group - you
+still need the VPC/subnet IDs below either way.
+Find your default VPC and one of its subnets with:
+```bash
+aws ec2 describe-vpcs --filters Name=is-default,Values=true --query 'Vpcs[0].VpcId' --output text --region <your-aws-region>
+aws ec2 describe-subnets --filters Name=vpc-id,Values=<vpc-id-from-above> --query 'Subnets[*].{Id:SubnetId,AZ:AvailabilityZone,CIDR:CidrBlock}' --output table --region <your-aws-region>
+```
+One subnet per AZ (matching `vpc_subnet_cidrs`) is what `subnet_ids` expects.
+
+### 3. A domain, delegated to a Route53 hosted zone
+
+This stack only **adds records to** an existing Route53 public hosted zone -
+it doesn't register a domain or create the zone for you. If you've applied
+[samdammers/aws-personal-account-template](https://github.com/samdammers/aws-personal-account-template)
+with its `domain_name` variable set, its `hosted_zone_id` output is exactly
+this. Otherwise, [register a domain directly through Route53](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-register.html)
+(simplest) or delegate a domain you already own elsewhere by [creating a hosted zone](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/AboutHZWorkingWith.html)
+and pointing your registrar's nameservers at it.
+
+### 4. A FoundryVTT license
+
+Required by the [felddy/foundryvtt](https://github.com/felddy/foundryvtt-docker)
+container to download the software.
+
+### 5. Terraform, and an S3 bucket for its state
+
+If you've applied
+[samdammers/aws-personal-account-template](https://github.com/samdammers/aws-personal-account-template),
+its `artifacts-<account-id>` bucket already exists for exactly this - use
+that instead of creating a new one. This is a different bucket from the
+`s3_bucket` variable below (game assets, always fresh, never shared with
+other stacks). Otherwise, [create a bucket](https://docs.aws.amazon.com/AmazonS3/latest/userguide/creating-bucket.html)
+you don't already use for anything else, or delete `backend.tf` entirely for
+local state.
 
 ## Setup
 
@@ -272,6 +329,7 @@ no built-in webhook feature, so the Lambda posts it directly.
 - **CloudFront-only: origin DNS lag** - the dynamic `origin.foundry.<domain>` record updates within seconds of the ECS task reaching RUNNING, but the site is unreachable for that brief window on every cold start.
 - **CloudFront-only: us-east-1 cert requirement** - the CloudFront viewer certificate must be issued in us-east-1 regardless of your deployment region; this repo handles that automatically via a provider alias, but it's worth knowing if you're debugging certificate issues.
 - **ALB-only: fixed cost** - the ALB runs continuously even when the ECS task is stopped. It's the biggest fixed cost in that path.
+- **The API Gateway account-level CloudWatch logging role** (`aws_api_gateway_account`) is a singleton per AWS account/region. This stack manages it by default (`manage_api_gateway_account = true`) so `terraform apply` works standalone in a fresh account - if you're layering this alongside another Terraform stack that already manages that same setting (e.g. [samdammers/aws-personal-account-template](https://github.com/samdammers/aws-personal-account-template)), set `manage_api_gateway_account = false` here instead, or the two stacks will fight over it (and risk clobbering it on `destroy`).
 
 ## File structure
 

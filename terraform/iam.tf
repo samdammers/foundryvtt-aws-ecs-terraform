@@ -163,6 +163,13 @@ resource "aws_iam_role_policy" "lambda_permissions" {
           Action   = ["s3:GetBucketPolicy", "s3:PutBucketPolicy"]
           Resource = "arn:aws:s3:::${var.s3_bucket}"
         },
+        {
+          # Allows the synchronous /discord router to invoke this Lambda asynchronously
+          # to process slash commands in the background and beat Discord's 3-second timeout.
+          Effect   = "Allow"
+          Action   = "lambda:InvokeFunction"
+          Resource = "arn:aws:lambda:${local.region}:${data.aws_caller_identity.current.account_id}:function:foundry-manager"
+        },
       ],
       var.use_cloudfront ? [
         {

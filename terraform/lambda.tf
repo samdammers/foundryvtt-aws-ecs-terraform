@@ -43,10 +43,11 @@ resource "aws_lambda_function" "foundry" {
   filename         = data.archive_file.lambda.output_path
   source_code_hash = data.archive_file.lambda.output_base64sha256
 
-  handler     = "manager.lambda_handler"
-  runtime     = "python3.12"
-  timeout     = 120
-  memory_size = 128
+  handler = "manager.lambda_handler"
+  runtime = "python3.12"
+  # Lambda CPU scales with memory. 1024MB allocates significantly more CPU to
+  # speed up boto3 client initialization and async dispatch execution.
+  memory_size = 1024
   role        = aws_iam_role.lambda.arn
 
   architectures = ["arm64"]

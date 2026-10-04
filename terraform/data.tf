@@ -10,3 +10,5 @@ data "aws_ec2_managed_prefix_list" "cloudfront" {
   count = var.use_cloudfront ? 1 : 0
   name  = "com.amazonaws.global.cloudfront.origin-facing"
 }
+
+data "aws_caller_identity" "current" {}
